@@ -11,7 +11,7 @@ class AuthService:
     @classmethod
     def authorize(cls, token):
         return token == "caca"
-0
+
 
 class EchoServerProtocol(asyncio.Protocol):
     def connection_made(self, transport):
