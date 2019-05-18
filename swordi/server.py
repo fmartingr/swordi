@@ -1,6 +1,6 @@
 import asyncio
 
-from message import get_messages, PongMessage, PingMessage, AuthMessage
+from swordi.messages import get_messages, PongMessage, PingMessage, AuthMessage
 
 
 INTERFACE = "127.0.0.1"
@@ -13,7 +13,7 @@ class AuthService:
         return token == "caca"
 
 
-class EchoServerProtocol(asyncio.Protocol):
+class ServerProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         self.peername = transport.get_extra_info('peername')
         self.authorized = False
@@ -50,11 +50,12 @@ async def main():
     loop = asyncio.get_running_loop()
 
     server = await loop.create_server(
-        lambda: EchoServerProtocol(), INTERFACE, PORT)
+        lambda: ServerProtocol(), INTERFACE, PORT)
 
     async with server:
         await server.serve_forever()
 
 
-print(f"Starting server on {INTERFACE}:{PORT}")
-asyncio.run(main())
+def start():
+    print(f"Starting server on {INTERFACE}:{PORT}")
+    asyncio.run(main())

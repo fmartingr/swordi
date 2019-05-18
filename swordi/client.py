@@ -3,7 +3,7 @@ import random
 import time
 from datetime import datetime
 
-from message import PingMessage, PongMessage, AuthMessage, get_messages
+from swordi.messages import PingMessage, PongMessage, AuthMessage, get_messages
 
 
 SERVER_IP = "127.0.0.1"
@@ -12,7 +12,7 @@ SERVER_PORT = 9999
 PINGS = {}
 
 
-class EchoClientProtocol(asyncio.Protocol):
+class ClientProtocol(asyncio.Protocol):
     def __init__(self, on_con_lost, loop):
         self.loop = loop
         self.on_con_lost = on_con_lost
@@ -54,7 +54,7 @@ async def main():
     on_con_lost = loop.create_future()
 
     transport, protocol = await loop.create_connection(
-        lambda: EchoClientProtocol(on_con_lost, loop),
+        lambda: ClientProtocol(on_con_lost, loop),
         SERVER_IP, SERVER_PORT
     )
 
@@ -66,4 +66,5 @@ async def main():
         transport.close()
 
 
-asyncio.run(main())
+def start():
+    asyncio.run(main())
