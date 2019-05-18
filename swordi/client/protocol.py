@@ -1,9 +1,8 @@
 import asyncio
-import random
-import time
 from datetime import datetime
 from os import environ
 
+from swordi.client.log import Logger
 from swordi.messages import PingMessage, PongMessage, AuthMessage, get_messages
 
 
@@ -12,6 +11,13 @@ SERVER_PORT = environ.get("SWORDI_PORT", 9999)
 
 PINGS = {}
 
+logger = Logger()
+
+
+async def await_seconds(seconds, method):
+    await asyncio.sleep(seconds)
+    method()
+
 
 class ClientProtocol(asyncio.Protocol):
     def __init__(self, on_con_lost, loop):
@@ -19,6 +25,7 @@ class ClientProtocol(asyncio.Protocol):
         self.on_con_lost = on_con_lost
 
     def connection_made(self, transport):
+        logger.log("Connected to server!")
         self.transport = transport
         message = AuthMessage(token="caca")
         self.transport.write(message.serialize())
@@ -27,45 +34,48 @@ class ClientProtocol(asyncio.Protocol):
     def data_received(self, data):
         messages = get_messages(data)
         for message in messages:
-            print(f"[IN] {message}")
             if isinstance(message, PongMessage):
                 if message.data["uuid"] in PINGS:
                     now = datetime.now()
                     diff = now - PINGS[message.data["uuid"]]
-                    print(f"[Latency] {diff.microseconds}μs")
-            time.sleep(random.randint(1, 3))
-            self.send_ping()
+                    logger.latency.text = f"{diff.microseconds/1e+6}ms"
+
+                    asyncio.get_running_loop().create_task(
+                        await_seconds(1, self.send_ping)
+                    )
 
     def send_ping(self):
         message = PingMessage()
         PINGS[message.data["uuid"]] = datetime.now()
         self.transport.write(message.serialize())
-        print(f"[OUT] {message}")
 
     def connection_lost(self, exc):
-        print("The server closed the connection")
+        logger.log("Connection lost!")
         self.on_con_lost.set_result(True)
 
 
-async def main():
-    # Get a reference to the event loop as we plan to use
-    # low-level APIs.
+async def start_connection():
     loop = asyncio.get_running_loop()
-
     on_con_lost = loop.create_future()
+    reconnect_seconds = 5
 
-    transport, protocol = await loop.create_connection(
-        lambda: ClientProtocol(on_con_lost, loop),
-        SERVER_IP, SERVER_PORT
-    )
+    logger.log("Connecting to server...\n")
 
-    # Wait until the protocol signals that the connection
-    # is lost and close the transport.
-    try:
-        await on_con_lost
-    finally:
-        transport.close()
+    while True:
+        try:
+            transport, protocol = await loop.create_connection(
+                lambda: ClientProtocol(on_con_lost, loop), SERVER_IP, SERVER_PORT
+            )
 
-
-def start():
-    asyncio.run(main())
+            try:
+                await on_con_lost
+            finally:
+                transport.close()
+        except OSError:
+            # COnnection error
+            logger.log(
+                f"Can't connect to server, retrying in {reconnect_seconds} seconds"
+            )
+            await asyncio.sleep(reconnect_seconds)
+        else:
+            break

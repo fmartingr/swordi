@@ -12,16 +12,13 @@ class Message:
         self.data.update(kwargs)
 
     def __repr__(self):
-        params = ' '.join([
-            f"{key}={value}" for key, value in self.data.items()])
-        _repr = ' '.join([self.__class__.__name__, params])
+        params = " ".join([f"{key}={value}" for key, value in self.data.items()])
+        _repr = " ".join([self.__class__.__name__, params])
         return f"<{_repr}>"
 
     @property
     def repr(self):
-        data = {
-            "type": self.__class__.__name__,
-        }
+        data = {"type": self.__class__.__name__}
         data.update(self.data)
         return data
 
@@ -44,18 +41,17 @@ class PongMessage(Message):
 
 
 class AuthMessage(Message):
-    default_data = {
-        "token": None
-    }
+    default_data = {"token": None}
 
 
 def get_messages(data):
     from io import BytesIO
+
     unpacked = msgpack.Unpacker(BytesIO(data), raw=False)
     for msg in unpacked:
         message_type = msg.pop("type")
         yield MESSAGES[message_type](**msg)
 
 
-MESSAGES = (PingMessage, PongMessage, AuthMessage, )
+MESSAGES = (PingMessage, PongMessage, AuthMessage)
 MESSAGES = {cls.__name__: cls for cls in MESSAGES}

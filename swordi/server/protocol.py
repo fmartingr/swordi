@@ -4,8 +4,8 @@ from os import environ
 from swordi.messages import get_messages, PongMessage, PingMessage, AuthMessage
 
 
-INTERFACE = environ.get("SWORDI_HOST", "127.0.0.1")
-PORT = environ.get("SWORDI_PORT", 9999)
+SWORDI_HOST = environ.get("SWORDI_HOST", "127.0.0.1")
+SWORDI_PORT = environ.get("SWORDI_PORT", 9999)
 
 
 class AuthService:
@@ -51,12 +51,7 @@ async def main():
     loop = asyncio.get_running_loop()
 
     server = await loop.create_server(
-        lambda: ServerProtocol(), INTERFACE, PORT)
+        lambda: ServerProtocol(), SWORDI_HOST, SWORDI_PORT)
 
     async with server:
         await server.serve_forever()
-
-
-def start():
-    print(f"Starting server on {INTERFACE}:{PORT}")
-    asyncio.run(main())
