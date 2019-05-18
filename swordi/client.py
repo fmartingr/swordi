@@ -2,12 +2,13 @@ import asyncio
 import random
 import time
 from datetime import datetime
+from os import environ
 
 from swordi.messages import PingMessage, PongMessage, AuthMessage, get_messages
 
 
-SERVER_IP = "127.0.0.1"
-SERVER_PORT = 9999
+SERVER_IP = environ.get("SWORDI_HOST", "127.0.0.1")
+SERVER_PORT = environ.get("SWORDI_PORT", 9999)
 
 PINGS = {}
 

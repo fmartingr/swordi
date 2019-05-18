@@ -1,10 +1,11 @@
 import asyncio
+from os import environ
 
 from swordi.messages import get_messages, PongMessage, PingMessage, AuthMessage
 
 
-INTERFACE = "127.0.0.1"
-PORT = 9999
+INTERFACE = environ.get("SWORDI_HOST", "127.0.0.1")
+PORT = environ.get("SWORDI_PORT", 9999)
 
 
 class AuthService:
