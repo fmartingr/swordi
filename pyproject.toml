@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "swordi"
+version = "0.1.0"
+description = "A simple terminal multiplayer game engine"
+authors = ["Felipe Martin <me@fmartingr.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+msgpack = "^0.6.1"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+server = "swordi.server:start"
+client = "swordi.client:start"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
