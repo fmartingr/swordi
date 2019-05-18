@@ -10,7 +10,7 @@ A simple terminal multiplayer game engine.
 
 - Python 3.6+
 - [Poetry](https://github.com/sdispater/poetry)
-
+- (optional) [direnv](https://github.com/direnv/direnv)
 
 ## Running the server
 
