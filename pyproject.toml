@@ -8,11 +8,13 @@ authors = ["Felipe Martin <me@fmartingr.com>"]
 python = "^3.6"
 msgpack = "^0.6.1"
 prompt_toolkit = "^2.0"
+toml = "^0.10.0"
 
 [tool.poetry.dev-dependencies]
 black = { version = "*", allows-prereleases = true }
 flake8 = "*"
 rope = "^0.14.0"
+pytest = "^4.5"
 
 [tool.poetry.scripts]
 server = "swordi.server.entrypoint:start"
