@@ -1,4 +1,12 @@
-from swordi.core.objects import Resource, Quantity
+from dataclasses import dataclass
+from typing import List
+
+from swordi.core.objects import Resource, Quantity, GameObject
+
+
+@dataclass
+class GameObjectWithNestedList(GameObject):
+    resources: List[Resource]
 
 
 def test_gameobject_serializes_ok():
@@ -16,6 +24,14 @@ def test_gameobject_serializes_nested_ok():
     assert serialized['resource'] == resource.serialize()
 
 
+def test_gameobject_serializes_nested_list_ok():
+    resource1 = Resource(name="Test1")
+    resource2 = Resource(name="Test2")
+    resources = GameObjectWithNestedList(resources=[resource1, resource2])
+    serialized = resources.serialize()
+    assert isinstance(serialized['resources'], list)
+
+
 def test_gameobject_deserializes_ok():
     resource = Resource("test")
     serialized = resource.serialize()
@@ -30,3 +46,14 @@ def test_gameobject_deserializes_nested_ok():
     deserialized = Quantity.deserialize(serialized)
     assert deserialized.serialize() == serialized
     assert isinstance(deserialized.resource, Resource)
+
+
+def test_gameobject_deserializes_nested_list_ok():
+    resource1 = Resource(name="Test1")
+    resource2 = Resource(name="Test2")
+    resources = GameObjectWithNestedList(resources=[resource1, resource2])
+    serialized = resources.serialize()
+    deserialized = GameObjectWithNestedList.deserialize(serialized)
+    assert deserialized.serialize() == serialized
+    assert isinstance(deserialized.resources, list)
+    assert isinstance(deserialized.resources[0], Resource)

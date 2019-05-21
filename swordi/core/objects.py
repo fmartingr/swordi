@@ -2,8 +2,8 @@
 Python representations of the flavor objects.
 """
 import copy
-from dataclasses import dataclass, asdict, is_dataclass
-from typing import List, Text
+from dataclasses import dataclass, asdict, is_dataclass, fields
+from typing import List, Text, _GenericAlias
 
 
 @dataclass
@@ -14,9 +14,17 @@ class GameObject:
     @classmethod
     def deserialize(cls, serialized):
         data = copy.deepcopy(serialized)
-        for field_name, field_annotation in cls.__annotations__.items():
-            if is_dataclass(field_annotation):
-                data[field_name] = field_annotation.deserialize(data[field_name])
+        for field in fields(cls):
+            if is_dataclass(field.type):
+                data[field.name] = field.type.deserialize(data[field.name])
+
+            if isinstance(field.type, _GenericAlias):
+                if field.type._name == "List" and is_dataclass(field.type.__args__[0]):
+                    gameobject_cls = field.type.__args__[0]
+                    data[field.name] = [
+                        gameobject_cls.deserialize(deserialized)
+                        for deserialized in data[field.name]
+                    ]
         return cls(**data)
 
 
@@ -52,8 +60,4 @@ class Player(GameObject):
     planet: Planet
 
 
-OBJECTS = {
-    cls.__name__.lower(): cls for cls in [
-        Resource, Building, Planet, Player
-    ]
-}
+OBJECTS = {cls.__name__.lower(): cls for cls in [Resource, Building, Planet, Player]}
