@@ -1,10 +1,7 @@
 Swordi
 -
 
-A simple terminal multiplayer game engine.
-
-> Note: This is not aiming to be a real game engine by any means, is just that I like to play with stuff.
-> This seemed like a fun project to do so I could learn more about asyncio and netwroking.
+Just an experiment to try out asyncio.
 
 - [Requirements](#requirements)
 - [Running the server](#running-the-server)
