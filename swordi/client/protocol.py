@@ -3,7 +3,7 @@ from datetime import datetime
 from os import environ
 
 from swordi.client.log import Logger
-from swordi.messages import PingMessage, PongMessage, AuthMessage, get_messages
+from swordi.messages import *
 
 
 SERVER_IP = environ.get("SWORDI_HOST", "127.0.0.1")
@@ -24,12 +24,18 @@ class ClientProtocol(asyncio.Protocol):
         self.loop = loop
         self.on_con_lost = on_con_lost
 
+    async def send_messages(self):
+        while True:
+            msg = await msgqueue.get()
+            self.transport.write(msg.serialize())
+
     def connection_made(self, transport):
         logger.log("Connected to server!")
         self.transport = transport
         message = AuthMessage(token="caca")
         self.transport.write(message.serialize())
         self.send_ping()
+        self.loop.create_task(self.send_messages())
 
     def data_received(self, data):
         messages = get_messages(data)
@@ -41,8 +47,14 @@ class ClientProtocol(asyncio.Protocol):
                     logger.latency.text = f"{diff.microseconds/1e+6}ms"
 
                     asyncio.get_running_loop().create_task(
-                        await_seconds(1, self.send_ping)
+                        await_seconds(10, self.send_ping)
                     )
+
+            if isinstance(message, SimpleLogMessage):
+                logger.log(message.data["message"])
+
+            if isinstance(message, RoomSayMessage):
+                logger.log(f"[{message.data['peer_id']}]: {message.data['message']}")
 
     def send_ping(self):
         message = PingMessage()

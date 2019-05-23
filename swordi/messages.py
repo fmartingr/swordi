@@ -1,7 +1,11 @@
+import asyncio
 import copy
 import uuid
 
 import msgpack
+
+
+msgqueue = asyncio.Queue()
 
 
 class Message:
@@ -25,6 +29,9 @@ class Message:
     def serialize(self):
         return msgpack.packb(self.repr)
 
+    def queue(self):
+        asyncio.get_running_loop().create_task(msgqueue.put(self))
+
 
 class PingMessage(Message):
     data = {}
@@ -40,8 +47,29 @@ class PongMessage(Message):
     pass
 
 
+class SimpleLogMessage(Message):
+    default_data = {"message": None}
+
+
 class AuthMessage(Message):
-    default_data = {"token": None}
+    default_data = {"token": None, "peer_id": None}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.data["peer_id"]:
+            self.data["peer_id"] = str(uuid.uuid4())[0:13]
+
+
+class RoomJoinMessage(Message):  # Used to change room
+    default_data = {"room_name": None}
+
+
+class RoomLeaveMessage(Message):
+    pass
+
+
+class RoomSayMessage(Message):
+    default_data = {"message": None, "room_name": None, "peer_id": None}
 
 
 def get_messages(data):
@@ -53,5 +81,13 @@ def get_messages(data):
         yield MESSAGES[message_type](**msg)
 
 
-MESSAGES = (PingMessage, PongMessage, AuthMessage)
+MESSAGES = (
+    PingMessage,
+    PongMessage,
+    AuthMessage,
+    RoomJoinMessage,
+    RoomLeaveMessage,
+    RoomSayMessage,
+    SimpleLogMessage,
+)
 MESSAGES = {cls.__name__: cls for cls in MESSAGES}

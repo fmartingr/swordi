@@ -8,6 +8,7 @@ from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
 
 from swordi.client.log import log_buffer, latency_buffer
+from swordi.messages import RoomJoinMessage, RoomLeaveMessage, RoomSayMessage
 
 
 class SwordiCommand:
@@ -17,11 +18,35 @@ class SwordiCommand:
 class QuitCommand(SwordiCommand):
     cmd = "quit"
 
-    def call(self):
+    def call(self, *args):
         clientui.exit()
 
 
-COMMANDS = {cmd.cmd: cmd() for cmd in (QuitCommand,)}
+class JoinRoomCommand(SwordiCommand):
+    cmd = "join"
+
+    def call(self, room_name):
+        msg = RoomJoinMessage(room_name=room_name)
+        msg.queue()
+
+
+class LeaveRoomCommand(SwordiCommand):
+    cmd = "leave"
+
+    def call(self):
+        msg = RoomLeaveMessage()
+        msg.queue()
+
+
+class SayCommand(SwordiCommand):
+    cmd = "say"
+
+    def call(self, *message):
+        msg = RoomSayMessage(message=" ".join(message))
+        msg.queue()
+
+
+COMMANDS = {cmd.cmd: cmd() for cmd in (QuitCommand, JoinRoomCommand, LeaveRoomCommand, SayCommand, )}
 
 
 class CommandsCompleter(Completer):
@@ -31,11 +56,11 @@ class CommandsCompleter(Completer):
                 yield Completion(command, start_position=document.cursor_position * -1)
 
 
-def dummy(buffer: Buffer):
-    command = buffer.text
+def cmd_handler(buffer: Buffer):
+    command, *arguments = buffer.text.split(" ")
     buffer.reset()
     if command in COMMANDS.keys():
-        COMMANDS[command].call()
+        COMMANDS[command].call(*arguments)
     else:
         log_buffer.newline()
         log_buffer.insert_text(f"Command '{command}' not found.")
@@ -43,7 +68,7 @@ def dummy(buffer: Buffer):
 
 
 input_buffer = Buffer(
-    accept_handler=dummy, multiline=False, completer=CommandsCompleter()
+    accept_handler=cmd_handler, multiline=False, completer=CommandsCompleter()
 )
 root_container = HSplit(
     [
